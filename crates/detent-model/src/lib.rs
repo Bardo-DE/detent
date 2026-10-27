@@ -33,6 +33,7 @@ mod notice_tests;
 mod origin;
 mod outside;
 mod page;
+mod person;
 mod picker;
 mod picture_add;
 mod privacy;
@@ -44,6 +45,7 @@ mod running;
 mod screen_sharing;
 mod search;
 mod sharing;
+mod sidebar_groups;
 mod shortcuts;
 mod spaces;
 mod style_notes;
@@ -156,6 +158,8 @@ pub use outside::{
     way_menu,
 };
 pub use page::PageSlug;
+pub use person::{PERSON_LINE, Person, passwd_name};
+pub use sidebar_groups::{SidebarGroup, group_of, sidebar_groups};
 pub use picker::{
     Applying, AutoPool, AwaitingAccount, Busy, Choice, ChoiceGap, ChoiceReadiness, ChoiceSection,
     Clearing, Described, Gate, KindRows, LocalAsk, LocalEngine, LocalModel, LocalView, MenuLine,

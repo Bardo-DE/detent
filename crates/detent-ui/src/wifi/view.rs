@@ -24,7 +24,7 @@ pub(crate) fn WifiPane() -> Element {
     match state {
         WifiState::Looking => rsx! { div { class: "system-page", "data-system": "looking" } },
         WifiState::Unavailable(missing) => rsx! {
-            Unavailable { title: "Wi-Fi", words: wifi_missing_words(missing) }
+            Unavailable { icon: Icon::Wifi, title: "Wi-Fi", words: wifi_missing_words(missing) }
         },
         WifiState::Ready(page) => {
             let press = EventHandler::new(move |input: WifiInput| driver.feed(input));

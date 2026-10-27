@@ -23,7 +23,7 @@ pub(crate) fn DisplaysPane() -> Element {
     match state {
         DisplaysState::Looking => rsx! { div { class: "system-page", "data-system": "looking" } },
         DisplaysState::Unavailable(missing) => rsx! {
-            Unavailable { title: "Displays", words: displays_missing_words(missing) }
+            Unavailable { icon: Icon::Monitor, title: "Displays", words: displays_missing_words(missing) }
         },
         DisplaysState::Ready(page) => {
             let brightness = driver.brightness.read().clone();

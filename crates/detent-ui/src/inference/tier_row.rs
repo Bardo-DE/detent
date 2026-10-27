@@ -10,7 +10,6 @@ use detent_model::{
 };
 use dioxus::prelude::*;
 use ds::components::content::label::LabelRole;
-use ds::components::fields::field_help::HelpShown;
 use ds::components::fields::field_row::FieldRow;
 use ds::components::menus::pop_up_button::PopUpButton;
 use ds::prelude::*;
@@ -53,7 +52,6 @@ pub(crate) fn TierRow(
         FieldRow {
             label: TextLine::from(row.label.clone()),
             help: if row.help.is_empty() { None } else { Some(TextLine::from(row.help.clone())) },
-            help_shown: HelpShown::OnRequest,
             availability,
             common: Common { id: Some(row_id("picker", &row.path.0)), ..Common::default() },
             if let Some(text) = loading {

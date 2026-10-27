@@ -5,10 +5,9 @@ use super::io::{NOT_AVAILABLE, forget, is_valued, set};
 use super::program_view::Listed;
 use crate::env::Env;
 use crate::live::{Daemon, Followed, follow, reread};
+use crate::system::Absent;
 use detent_model::{Absence, PrivacyEffect, PrivacyInput, PrivacyState, privacy_step};
 use dioxus::prelude::*;
-use ds::components::content::label::LabelRole;
-use ds::components::fields::field_row::{FieldGroup, FieldRow};
 use ds::prelude::*;
 use ds::stack::toast_hub::ToastHub;
 use ds_settings::live::LiveClient;
@@ -85,13 +84,10 @@ pub(crate) fn PrivacyPane() -> Element {
         PrivacyState::Looking => rsx! {},
         PrivacyState::Unavailable(absence) => rsx! {
             div { class: "privacy", "data-privacy": "unavailable",
-                FieldGroup { title: Some("Privacy & Security".to_owned()),
-                    FieldRow {
-                        label: TextLine::from("Privacy & Security"),
-                        help: Some(TextLine::from(absence_help(&absence))),
-                        availability: Availability::Disabled,
-                        Label { text: "Unavailable", role: LabelRole::Secondary }
-                    }
+                Absent {
+                    icon: Icon::Hand,
+                    title: "Privacy & Security",
+                    words: absence_help(&absence),
                 }
             }
         },

@@ -1,34 +1,18 @@
-//! One page: its sections, each a card of rows, and the sheet rows of its advanced keys at the end.
+//! One page: a stack whose root is the page's blocks and whose pushed pages are its advanced
+//! sections.
 
-use crate::accounts::AccountsPane;
-use crate::advanced_view::AdvancedView;
-use crate::assistant_model::AssistantModelPane;
-use crate::assistants::Assistants;
-use crate::bluetooth::BluetoothPane;
-use crate::displays::DisplaysPane;
+use crate::advanced_view::{AdvancedPage, Level, level_title};
 use crate::env::Env;
-use crate::extensions::ExtensionsPane;
 use crate::files::{Edit, Files};
-use crate::hot_corners::HotCorners;
-use crate::inference::{LocalRuntimes, ModelPicker, show_reason};
 use crate::live::start;
 use crate::memory::MemoryConsent;
-use crate::privacy::PrivacyPane;
-use crate::screen_sharing::ScreenSharingPane;
-use crate::section_view::SectionView;
-use crate::shortcuts::ShortcutsPane;
-use crate::spaces::SpacesPane;
-use crate::style_notes::StyleNotesLine;
-use crate::updates::SoftwareUpdatePane;
-use crate::wifi::WifiPane;
-use detent_model::{
-    Block, Offers, PageModel, PageSlug, advanced_sections, blocks, holds_memory_settings,
-    modules_read,
-};
+use crate::page_body::PageBody;
+use detent_model::{Offers, PageModel, PageSlug, holds_memory_settings, modules_read};
 use dioxus::prelude::*;
+use ds::prelude::*;
 use ds_settings::schema::KeyPath;
 
-/// The sections of the page `slug`, then its advanced keys, scrolling.
+/// The page `slug`, scrolling; a drill-in row of its advanced keys pushes a page over it.
 #[component]
 pub fn PageView(
     slug: PageSlug,
@@ -37,6 +21,7 @@ pub fn PageView(
     onedit: EventHandler<Edit>,
 ) -> Element {
     let env = use_context::<Env>();
+    let mut path = use_signal(|| PanePath::new(Level::Page));
     // The daemons this page reads are asked to start once, when the page is shown (the window
     // mounts a page afresh for each visit), and never for a page that was not opened.
     let started = env
@@ -82,37 +67,41 @@ pub fn PageView(
     let Some(page) = env.catalogue.page(&slug).map(|page| page.offering(&offers)) else {
         return rsx! {};
     };
-    let page = &page;
-    let advanced = advanced_sections(page);
-    rsx! {
-        div { class: "scroll", "data-page": "{slug.0}",
-            for block in blocks(page) {
-                match block {
-                    Block::Section(section) => rsx! {
-                        SectionView { key: "{section.title}", section, hits: hits.clone(), files, onedit }
-                    },
-                    Block::AccountsPane => rsx! { AccountsPane {} },
-                    Block::PrivacyPane => rsx! { PrivacyPane {} },
-                    Block::ScreenSharing => rsx! { ScreenSharingPane {} },
-                    Block::SpacesPane => rsx! { SpacesPane {} },
-                    Block::Shortcuts => rsx! { ShortcutsPane {} },
-                    Block::SoftwareUpdate => rsx! { SoftwareUpdatePane {} },
-                    Block::AssistantModel => rsx! { AssistantModelPane {} },
-                    Block::Wifi => rsx! { WifiPane {} },
-                    Block::Bluetooth => rsx! { BluetoothPane {} },
-                    Block::Displays => rsx! { DisplaysPane {} },
-                    Block::Extensions => rsx! { ExtensionsPane {} },
-                    Block::Assistants => rsx! { Assistants {} },
-                    Block::LocalRuntimes => rsx! { LocalRuntimes {} },
-                    Block::StyleNotes => rsx! { StyleNotesLine {} },
-                    Block::HotCorners(entries) => rsx! { HotCorners { entries, files, onedit } },
-                    Block::ModelPicker => rsx! {
-                        ModelPicker { reasons: show_reason(&env, &files()) }
-                    },
+    let model = page;
+    let title = Callback::new({
+        let model = model.clone();
+        move |level: Level| level_title(&level, &model)
+    });
+    let drawn = Callback::new({
+        let model = model.clone();
+        move |level: Level| match level {
+            Level::Page => rsx! {
+                PageBody {
+                    page: model.clone(),
+                    hits: hits.clone(),
+                    files,
+                    onedit,
+                    on_open: move |name: String| path.set(path().pushed(Level::Advanced(name))),
                 }
+            },
+            Level::Advanced(name) => {
+                let section = model
+                    .advanced
+                    .iter()
+                    .find(|group| group.title == name)
+                    .cloned()
+                    .unwrap_or_default();
+                rsx! { AdvancedPage { section, hits: hits.clone(), files, onedit } }
             }
-            if !advanced.is_empty() {
-                AdvancedView { slug: slug.clone(), groups: advanced, basic: page.sections.clone(), hits: hits.clone(), files, onedit }
+        }
+    });
+    rsx! {
+        div { class: "scroll page-stack", "data-page": "{slug.0}",
+            PaneStack::<Level> {
+                path: path(),
+                title,
+                page: drawn,
+                on_back: move |()| path.set(path().popped()),
             }
         }
     }

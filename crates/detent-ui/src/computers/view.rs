@@ -6,13 +6,13 @@ use super::server_sheet::ServerSheetView;
 use crate::assistants::{PlaceEntry, PlaceRow};
 use crate::env::Env;
 use crate::live::{BusSource, Daemon, next_owner, owner_changes};
+use crate::system::Absent;
 use detent_model::{
     Absence, AddList, ComputersEffect, ComputersInput, ComputersReady, ComputersState,
     computers_step, guest_line,
 };
 use dioxus::prelude::*;
 use ds::components::content::label::{LabelRole, LabelStyle};
-use ds::components::fields::field_help::HelpShown;
 use ds::components::fields::field_row::{FieldGroup, FieldRow};
 use ds::prelude::*;
 use ds::root::common::Common;
@@ -178,14 +178,7 @@ pub(crate) fn Computers(
         ComputersState::Looking => rsx! {},
         ComputersState::Unavailable(absence) => rsx! {
             div { class: "computers", "data-computers": "unavailable",
-                FieldGroup { title: Some(TITLE.to_owned()),
-                    FieldRow {
-                        label: TextLine::from(TITLE),
-                        help: Some(TextLine::from(absence_help(&absence))),
-                        availability: Availability::Disabled,
-                        Label { text: "Unavailable", role: LabelRole::Secondary }
-                    }
-                }
+                Absent { icon: Icon::Monitor, title: TITLE, words: absence_help(&absence) }
             }
         },
         ComputersState::Ready(ready) => rsx! { Listed { ready, feed, rows } },
@@ -215,7 +208,6 @@ fn Listed(
                 }
                 FieldRow { label: TextLine::from("Add a server"),
                     help: Some(TextLine::from(ADD_SERVER_HELP)),
-                    help_shown: HelpShown::OnRequest,
                     Button {
                         common: Common { aria_label: Some("Add a server".to_owned()), id: Some("add-server".to_owned()), ..Common::default() },
                         label: "Add a server\u{2026}",
@@ -291,7 +283,7 @@ fn CandidateLine(candidate: ComputerCandidate, feed: EventHandler<ComputersInput
     };
     let node = candidate.node.clone();
     rsx! {
-        FieldRow { label: TextLine::from(candidate.name.clone()), help: Some(TextLine::from(help)), help_shown: HelpShown::OnRequest,
+        FieldRow { label: TextLine::from(candidate.name.clone()), help: Some(TextLine::from(help)),
             Button {
                 common: Common { aria_label: Some(format!("Add {}", candidate.name)), ..Common::default() },
                 label: "Add",

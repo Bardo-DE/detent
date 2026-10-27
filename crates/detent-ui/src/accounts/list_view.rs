@@ -15,7 +15,6 @@ use ds::base::vocab::RowState;
 use ds::components::content::label::{LabelRole, LabelStyle};
 use ds::components::controls::badge::{Badge, BadgeContent, BadgeTone};
 use ds::components::controls::disclosure::Disclosure;
-use ds::components::fields::field_help::HelpShown;
 use ds::components::fields::field_row::{FieldGroup, FieldRow};
 use ds::components::lists::list::model::ListStyle;
 use ds::components::overlays::empty_state::EmptyState;
@@ -259,7 +258,6 @@ fn MoreRows(pane: Pane, adding: Adding, availability: Availability, on: FootHand
                     FieldRow {
                         label: TextLine::from("AI keys"),
                         help: Some(TextLine::from("Add a key, or sign in to an assistant.")),
-                        help_shown: HelpShown::OnRequest,
                         AddKeyButton { adding, availability, onpress: move |()| on.add_key.call(()) }
                     }
                 }
@@ -267,7 +265,6 @@ fn MoreRows(pane: Pane, adding: Adding, availability: Availability, on: FootHand
                     FieldRow {
                         label: TextLine::from("Sync"),
                         help: Some(TextLine::from("Choose an account to sync.")),
-                        help_shown: HelpShown::OnRequest,
                         ActionButton {
                             label: add.name.clone(),
                             subject: String::new(),
@@ -310,7 +307,6 @@ pub(super) fn ClientIds(
                             key: "{client.path.0}",
                             label: TextLine::from(client.label.clone()),
                             help: (!client.help.is_empty()).then(|| TextLine::from(client.help.clone())),
-                            help_shown: HelpShown::OnRequest,
                             common: Common { id: Some(row_id("client", &client.path.0)), ..Common::default() },
                             ClientField {
                                 key: "{client.path.0}/{client.value.key()}",

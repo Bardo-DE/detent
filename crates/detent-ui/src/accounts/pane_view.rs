@@ -12,6 +12,7 @@ use super::sync_read::use_sync_book;
 use crate::env::Env;
 use crate::live::follow_holds;
 use crate::marks::ProviderMarks;
+use crate::system::Absent;
 use detent_model::{
     Absence, AccountsInput, AccountsReady, AccountsState, DatasetName, HoldInput, Holds, ModuleId,
     ModuleRow, SyncBook,
@@ -19,8 +20,6 @@ use detent_model::{
 use dioxus::prelude::*;
 use ds::components::chrome::split_view::model::{Collapsing, PaneSize, PaneSpec, SplitPane};
 use ds::components::chrome::split_view::view::SplitView;
-use ds::components::content::label::LabelRole;
-use ds::components::fields::field_row::{FieldGroup, FieldRow};
 use ds::components::overlays::empty_state::EmptyState;
 use ds::prelude::*;
 
@@ -245,14 +244,7 @@ fn absence_help(absence: &Absence) -> String {
 fn Unavailable(absence: Absence) -> Element {
     rsx! {
         div { class: "accounts", "data-accounts": "unavailable",
-            FieldGroup { title: Some("Accounts".to_owned()),
-                FieldRow {
-                    label: TextLine::from("Accounts"),
-                    help: Some(TextLine::from(absence_help(&absence))),
-                    availability: Availability::Disabled,
-                    Label { text: "Unavailable", role: LabelRole::Secondary }
-                }
-            }
+            Absent { icon: Icon::Key, title: "Accounts", words: absence_help(&absence) }
         }
     }
 }

@@ -22,7 +22,7 @@ pub(crate) fn BluetoothPane() -> Element {
     match state {
         BtState::Looking => rsx! { div { class: "system-page", "data-system": "looking" } },
         BtState::Unavailable(missing) => rsx! {
-            Unavailable { title: "Bluetooth", words: bluetooth_missing_words(missing) }
+            Unavailable { icon: Icon::Bluetooth, title: "Bluetooth", words: bluetooth_missing_words(missing) }
         },
         BtState::Ready(page) => {
             let press = EventHandler::new(move |input: BtInput| driver.feed(input));

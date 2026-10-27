@@ -3,10 +3,10 @@
 
 use crate::engine_install::EngineSheetView;
 use crate::inference::{TierRow, TurnOnAlert, Unavailable};
+use crate::system::Absent;
 use detent_model::{Clearing, ModelRow, PickerInput, PickerState, assistant_of};
 use dioxus::prelude::*;
-use ds::components::content::label::LabelRole;
-use ds::components::fields::field_row::{FieldGroup, FieldRow};
+use ds::components::fields::field_row::FieldGroup;
 use ds::prelude::*;
 
 /// What the row is called here; the picker's own name for it is the tier.
@@ -50,13 +50,10 @@ pub(crate) fn AssistantPicker(
 fn Missing() -> Element {
     rsx! {
         div { class: "picker", "data-picker": "missing",
-            FieldGroup {
-                FieldRow {
-                    label: TextLine::from(ROW_LABEL),
-                    help: Some(TextLine::from("The model service offers no model for the assistant to use.")),
-                    availability: Availability::Disabled,
-                    Label { text: "Unavailable", role: LabelRole::Secondary }
-                }
+            Absent {
+                icon: Icon::Switches,
+                title: ROW_LABEL,
+                words: "The model service offers no model for the assistant to use.",
             }
         }
     }

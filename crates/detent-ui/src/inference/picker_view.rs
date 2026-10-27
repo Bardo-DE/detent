@@ -7,6 +7,7 @@ use super::turn_on::TurnOnAlert;
 use crate::engine_install::EngineSheetView;
 use crate::env::Env;
 use crate::files::{Files, value_of};
+use crate::system::Absent;
 use detent_model::{Absence, Adding, Clearing, KindRows, PickerInput, PickerState, Reason};
 use dioxus::prelude::*;
 use ds::components::content::label::{LabelRole, LabelStyle};
@@ -92,14 +93,7 @@ fn absence_help(absence: &Absence) -> String {
 pub(crate) fn Unavailable(absence: Absence) -> Element {
     rsx! {
         div { class: "picker", "data-picker": "unavailable",
-            FieldGroup { title: Some("Model choice".to_owned()),
-                FieldRow {
-                    label: TextLine::from("Models"),
-                    help: Some(TextLine::from(absence_help(&absence))),
-                    availability: Availability::Disabled,
-                    Label { text: "Unavailable", role: LabelRole::Secondary }
-                }
-            }
+            Absent { icon: Icon::Switches, title: "Models", words: absence_help(&absence) }
         }
     }
 }

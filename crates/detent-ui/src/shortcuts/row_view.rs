@@ -5,7 +5,6 @@ use crate::key_row::row_id;
 use detent_model::{Origin, ShortcutRow, ShortcutsInput};
 use dioxus::prelude::*;
 use ds::components::controls::button_model::Bezel;
-use ds::components::fields::field_help::HelpShown;
 use ds::components::fields::field_row::FieldRow;
 use ds::prelude::*;
 use ds::root::common::Common;
@@ -19,7 +18,6 @@ pub(super) fn ShortcutLine(row: ShortcutRow, drive: EventHandler<ShortcutsInput>
         FieldRow {
             label: TextLine::from(row.name.clone()),
             help: Some(TextLine::from(row.note())),
-            help_shown: HelpShown::OnRequest,
             common: Common { id: Some(row_id("shortcut", &row.name)), ..Common::default() },
             ShortcutCell { row: row.clone(), drive }
             if row.origin == Origin::You {

@@ -31,7 +31,7 @@ fn shoot(page: &str, scheme: Scheme, name: &str) -> usize {
     let dir = shots_dir();
     std::fs::create_dir_all(&dir).expect("shots dir");
     let file = format!(
-        "{page}-{}.png",
+        "{}-{}.png", page.replace(":", "-"),
         if scheme == Scheme::Dark {
             "dark"
         } else {
@@ -44,14 +44,10 @@ fn shoot(page: &str, scheme: Scheme, name: &str) -> usize {
 
 #[test]
 fn each_page_is_drawn_in_light_and_dark() {
-    for page in [
-        "appearance",
-        "dock",
-        "mouse_and_gestures",
-        "software-update",
-    ] {
-        let light = shoot(page, Scheme::Light, &format!("shot-{page}-light"));
-        let dark = shoot(page, Scheme::Dark, &format!("shot-{page}-dark"));
+    for page in ["wifi", "bluetooth", "notifications", "appearance", "extensions", "intelligence", "assistant-model", "privacy", "dock", "displays", "wallpaper", "spaces", "power", "software-update", "accounts", "keyboard_and_shortcuts", "mouse_and_gestures", "apps", "app:files"] {
+        let name = page.replace(":", "-");
+        let light = shoot(page, Scheme::Light, &format!("shot-{name}-light"));
+        let dark = shoot(page, Scheme::Dark, &format!("shot-{name}-dark"));
         assert!(
             light > 50,
             "{page} light is a real picture, not a blank window ({light} colours)"
