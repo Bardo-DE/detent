@@ -163,9 +163,9 @@ pub use picker::{
 };
 pub use picture_add::AddOutcome;
 pub use privacy::{
-    CellKind, DesktopApp, PowerCell, PowerStanding, PrivacyEffect, PrivacyInput, PrivacyPane,
-    PrivacyPower, PrivacyProgram, PrivacyReady, PrivacyState, PrivacySwitch, ProgramBook,
-    ProgramLook, ProgramSubject, SubjectKind, privacy_step,
+    CellKind, DesktopApp, EntryVisibility, PowerCell, PowerStanding, PrivacyEffect, PrivacyInput,
+    PrivacyPane, PrivacyPower, PrivacyProgram, PrivacyReady, PrivacyState, PrivacySwitch,
+    ProgramBook, ProgramLook, ProgramSubject, SubjectKind, privacy_step,
 };
 pub use range::{Number, Range};
 pub use reason::Reason;
@@ -176,7 +176,8 @@ pub use running::{
 };
 pub use screen_sharing::{
     APP_ID_MAX, GRANTS_MAX, ScreenGrant, ScreenGrantRow, ScreenSharingEffect, ScreenSharingInput,
-    ScreenSharingReady, ScreenSharingState, ShareLength, screen_grants_of, screen_sharing_step,
+    ScreenSharingReady, ScreenSharingState, ShareLength, allow_candidates, screen_grants_of,
+    screen_sharing_step,
 };
 pub use search::{Found, Hit, Rank, Search, search};
 pub use sharing::{

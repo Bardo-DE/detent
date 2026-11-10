@@ -20,6 +20,15 @@ const PLACE_MAX_CHARS: usize = 60;
 /// What stands for a character that must not be drawn (a control or a direction override).
 const REPLACEMENT: char = '\u{FFFD}';
 
+/// Whether an app's entry is meant to be shown in menus.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EntryVisibility {
+    /// The entry is listed.
+    Listed,
+    /// The entry asks not to be shown (`NoDisplay` or `Hidden`).
+    Hidden,
+}
+
 /// One installed app, from its desktop entry.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DesktopApp {
@@ -38,6 +47,8 @@ pub struct DesktopApp {
     /// Whether the entry's folder is one only an administrator can change. Only then does the
     /// entry name anything.
     pub origin: SchemaOrigin,
+    /// Whether the entry is listed or asks not to be shown.
+    pub visibility: EntryVisibility,
 }
 
 /// The installed apps.

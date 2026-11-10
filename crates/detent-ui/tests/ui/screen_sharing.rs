@@ -1,5 +1,6 @@
 //! The Privacy page's screen-sharing apps over a fake portal on a private bus: the apps it
-//! remembers are listed by the id it proved them by, Remove takes one back and the row goes, a
+//! remembers are listed by the id it proved them by, Remove takes one back and the row goes, Allow lets an app in and its row
+//! comes, a
 //! portal that is not running is started on demand and listed once the program that took its name
 //! holds the portal role, and a portal that cannot be started or is not the portal leaves the rest
 //! of the page as it was.
@@ -29,6 +30,9 @@ const DAY: u64 = 24 * HOUR;
 const GROUP: &str = "[data-screen-sharing=\"list\"]";
 const UNAVAILABLE: &str = "[data-screen-sharing=\"unavailable\"]";
 const REMOVE_MEET: &str = "[aria-label=\"Remove Video Meet\"]";
+const ALLOW_DESK: &str = "[aria-label=\"Allow Remote Desk\"]";
+const ALLOW_DISCLOSURE: &str = "#screen-sharing-allow .ds-disclosure-trigger";
+const DESK: &str = "rustdesk";
 
 fn privacy() -> Opening {
     Opening {
@@ -143,6 +147,14 @@ fn world(name: &str, presence: Presence, trust: Trust) -> World {
     sandbox.write_application(
         MEET,
         "[Desktop Entry]\nType=Application\nName=Video Meet\nExec=flatpak run org.example.Meet\nX-Flatpak=org.example.Meet\n",
+    );
+    sandbox.write_application(
+        DESK,
+        "[Desktop Entry]\nType=Application\nName=Remote Desk\nExec=/usr/bin/rustdesk\n",
+    );
+    sandbox.write_application(
+        "helper",
+        "[Desktop Entry]\nType=Application\nName=Hidden Helper\nExec=/usr/bin/helper\nNoDisplay=true\n",
     );
     let harness = sandbox.harness(privacy());
     World {
@@ -376,4 +388,73 @@ fn the_program_that_holds_the_portal_role_is_listed() {
     let portal = w.portal.as_ref().expect("a portal");
     assert_eq!(portal.listed(), 1);
     assert_eq!(w.harness.count("[aria-label^=\"Remove \"]"), 3);
+}
+
+/// Opens the disclosure that lists the apps that can be allowed.
+fn open_allow(w: &mut World) {
+    click(&mut w.harness, ALLOW_DISCLOSURE);
+    settle(&mut w.harness, "the apps to allow", |h| {
+        h.count(ALLOW_DESK) == 1
+    });
+}
+
+#[test]
+fn allow_lets_an_app_in_and_it_joins_the_list() {
+    let mut w = world(
+        "screen-sharing-allow",
+        Presence::Running(remembered()),
+        Trust::Anyone,
+    );
+    steady(&mut w);
+    let html = w.harness.html();
+    for text in [
+        "Let an app in without asking",
+        "Use this for remote-access apps.",
+    ] {
+        assert!(html.contains(text), "{text} in {html}");
+    }
+    open_allow(&mut w);
+    let html = w.harness.html();
+    assert!(
+        !html.contains("Hidden Helper"),
+        "a hidden entry is not offered"
+    );
+    assert_eq!(
+        w.harness.count("[aria-label=\"Allow Video Meet\"]"),
+        0,
+        "an app already in the list is not offered"
+    );
+    assert!(w.portal.as_ref().expect("a portal").allowed().is_empty());
+    click(&mut w.harness, ALLOW_DESK);
+    settle(&mut w.harness, "the row to come", |h| {
+        h.count("[aria-label=\"Remove Remote Desk\"]") == 1
+    });
+    let portal = w.portal.as_ref().expect("a portal");
+    assert_eq!(portal.allowed(), [(DESK.to_owned(), "every".to_owned(), 3)]);
+    assert_eq!(
+        w.harness.count(ALLOW_DESK),
+        0,
+        "it is no longer offered once it is in the list"
+    );
+}
+
+#[test]
+fn a_refused_allow_is_told_in_plain_words_and_the_app_is_not_listed() {
+    let mut w = world(
+        "screen-sharing-allow-refused",
+        Presence::Running(remembered()),
+        Trust::Anyone,
+    );
+    steady(&mut w);
+    open_allow(&mut w);
+    w.portal.as_ref().expect("a portal").refuse_next();
+    click(&mut w.harness, ALLOW_DESK);
+    settle(&mut w.harness, "the toast", |h| h.count(".ds-toast") == 1);
+    let toast = w.harness.text_of(".ds-toast").unwrap_or_default();
+    assert!(
+        toast.contains("Screen sharing could not be changed"),
+        "{toast}"
+    );
+    assert!(w.portal.as_ref().expect("a portal").allowed().is_empty());
+    assert_eq!(w.harness.count("[aria-label=\"Remove Remote Desk\"]"), 0);
 }

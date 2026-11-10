@@ -17,6 +17,11 @@ pub trait Portal {
     /// Takes back everything remembered for the app: it is asked next time. Answers how many
     /// grants went.
     fn revoke(&self, app_id: &str) -> zbus::Result<u32>;
+
+    /// Lets the app share the screen and take over the keyboard and pointer without asking, until
+    /// it is taken back. `screens` is `none`, `every` or `output:<name>`; `input` is the set of
+    /// devices (1 keyboard, 2 pointer, 4 touchscreen; 0 none). It replaces what the app had.
+    fn allow(&self, app_id: &str, screens: &str, input: u32) -> zbus::Result<()>;
 }
 
 /// The portal whose owner was confirmed: calls go to that owner by its unique name.

@@ -1,6 +1,6 @@
-//! The calls on the portal: the list, and taking an app back. Both go to the owner of the
+//! The calls on the portal: the list, taking an app back, and letting one in. All go to the owner of the
 //! portal's name that was confirmed. The list starts the portal when nobody owns its name, since
-//! the portal keeps the apps it lets share on disk; taking an app back never starts it.
+//! the portal keeps the apps it lets share on disk; taking an app back or letting one in never starts it.
 
 use super::ScreenSharingLink;
 use super::proxy::portal;
@@ -10,7 +10,13 @@ use detent_callers::PORTAL_BUS;
 use detent_model::{Absence, ProgramSubject, ScreenGrant, Work, screen_grants_of};
 use ds_peer::within;
 
-/// What the person reads when an app could not be taken back.
+/// The screens an allowed app may share: every one.
+const ALLOWED_SCREENS: &str = "every";
+
+/// The devices an allowed app may take over: the keyboard (1) and the pointer (2).
+const ALLOWED_INPUT: u32 = 3;
+
+/// What the person reads when an app could not be taken back or let in.
 const COULD_NOT_REMOVE: &str = "Screen sharing could not be changed. Try again in a moment.";
 
 /// The apps that may share the screen without asking again. A portal nobody owns yet is asked to
@@ -41,6 +47,24 @@ async fn revoke(bus: &BusSource, app: &ProgramSubject) -> Result<(), String> {
         .map_err(|_| COULD_NOT_REMOVE.to_owned())
 }
 
+/// Lets `app` share every screen and be controlled without asking, until it is taken back.
+async fn allow(bus: &BusSource, app: &ProgramSubject) -> Result<(), String> {
+    let running = pinned(bus, PORTAL_BUS)
+        .await
+        .map_err(|_| COULD_NOT_REMOVE.to_owned())?;
+    let proxy = portal(&running)
+        .await
+        .map_err(|_| COULD_NOT_REMOVE.to_owned())?;
+    answered(
+        Deadline::ACTION,
+        peer::PORTAL,
+        proxy.allow(&app.0, ALLOWED_SCREENS, ALLOWED_INPUT),
+    )
+    .await
+    .ok_or_else(|| COULD_NOT_REMOVE.to_owned())?
+    .map_err(|_| COULD_NOT_REMOVE.to_owned())
+}
+
 /// The portal on the bus it is built over.
 #[derive(Debug)]
 pub struct OnBus(pub BusSource);
@@ -52,5 +76,9 @@ impl ScreenSharingLink for OnBus {
 
     fn revoke(&self, app: ProgramSubject) -> Work<'_, Result<(), String>> {
         Box::pin(async move { revoke(&self.0, &app).await })
+    }
+
+    fn allow(&self, app: ProgramSubject) -> Work<'_, Result<(), String>> {
+        Box::pin(async move { allow(&self.0, &app).await })
     }
 }

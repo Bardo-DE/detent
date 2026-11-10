@@ -11,7 +11,7 @@ pub use pane::{
     CellKind, PowerCell, PowerStanding, PrivacyPane, PrivacyProgram, ProgramSubject, SubjectKind,
 };
 pub use power::PrivacyPower;
-pub use programs::{DesktopApp, ProgramBook, ProgramLook};
+pub use programs::{DesktopApp, EntryVisibility, ProgramBook, ProgramLook};
 pub use step::{
     PrivacyEffect, PrivacyInput, PrivacyReady, PrivacyState, PrivacySwitch, privacy_step,
 };

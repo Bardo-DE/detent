@@ -29,6 +29,26 @@ pub(crate) fn remove(name: impl std::fmt::Display) -> String {
     format!("Remove {name}")
 }
 
+/// The words "Let an app in without asking".
+pub(crate) const LET_AN_APP_IN: &str = "Let an app in without asking";
+
+/// What letting an app in does, and who it is for.
+pub(crate) const LET_AN_APP_IN_HELP: &str = "It can then share this screen and be controlled without asking each time, until you remove it. Use this for remote-access apps.";
+
+/// The words "Allow an app".
+pub(crate) const ALLOW_AN_APP: &str = "Allow an app";
+
+/// The words "Allow".
+pub(crate) const ALLOW: &str = "Allow";
+
+/// The words "Allow {name}".
+pub(crate) fn allow(name: impl std::fmt::Display) -> String {
+    format!("Allow {name}")
+}
+
+/// The words "There are no other apps to allow.".
+pub(crate) const NO_APPS_TO_ALLOW: &str = "There are no other apps to allow.";
+
 #[cfg(test)]
 mod tests {
     use super::*;

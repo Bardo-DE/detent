@@ -2,7 +2,7 @@
 //! the way the shell does and draw its icon.
 
 use crate::desktop_paths::{app_id, desktop_files};
-use detent_model::{DesktopApp, OriginRule, ProgramBook, SchemaOrigin};
+use detent_model::{DesktopApp, EntryVisibility, OriginRule, ProgramBook, SchemaOrigin};
 use ds_helpers::{DESKTOP_ENTRY_CAP, DesktopFile, read_text_capped};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
@@ -53,6 +53,11 @@ fn app_of(path: &Path, text: &str, origin: SchemaOrigin) -> Option<DesktopApp> {
     if entry.string("Type").as_deref() != Some("Application") {
         return None;
     }
+    let visibility = if entry.is_true("NoDisplay") || entry.is_true("Hidden") {
+        EntryVisibility::Hidden
+    } else {
+        EntryVisibility::Listed
+    };
     let first = |key: &str| entry.string(key).and_then(|line| first_word(&line));
     Some(DesktopApp {
         id: app_id(path)?,
@@ -65,6 +70,7 @@ fn app_of(path: &Path, text: &str, origin: SchemaOrigin) -> Option<DesktopApp> {
         flatpak: entry.string("X-Flatpak").map(Cow::into_owned),
         icon: entry.string("Icon").and_then(|icon| icon_file(&icon)),
         origin,
+        visibility,
     })
 }
 

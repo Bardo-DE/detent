@@ -34,6 +34,14 @@ async fn the_daemon_panes_find_no_bus() {
 }
 
 #[tokio::test]
+async fn letting_an_app_in_or_taking_it_back_without_a_bus_says_it_was_not_done() {
+    let app = || detent_model::ProgramSubject("rustdesk".to_owned());
+    let portal = OnPortal(BusSource::Absent);
+    assert!(portal.allow(app()).await.is_err());
+    assert!(portal.revoke(app()).await.is_err());
+}
+
+#[tokio::test]
 async fn a_removal_without_a_bus_says_it_was_not_made() {
     let removal = almanac_core::Removal::KEEP_ALL;
     let ended = OnSpaces(BusSource::Absent)

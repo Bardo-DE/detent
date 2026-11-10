@@ -1,4 +1,4 @@
-//! The list's state, read from the portal when the page is shown and driven by Remove.
+//! The list's state, read from the portal when the page is shown and driven by Remove and Allow.
 
 use super::view::Listed;
 use crate::copy::absence::{Subject, absence as absence_words};
@@ -9,14 +9,14 @@ use detent_client::Client;
 use detent_model::{ScreenSharingInput, ScreenSharingState};
 use dioxus::prelude::*;
 
-/// The apps the portal lets share the screen without asking again, with a Remove on each.
+/// The apps the portal lets share the screen without asking again, with a Remove on each and a way to allow another.
 #[component]
 pub(crate) fn ScreenSharingPane() -> Element {
     let sharing = use_live(Client::screen_sharing);
     let state = sharing.state;
     let book = use_program_book();
     let now = use_client().now();
-    let remove = EventHandler::new(move |input: ScreenSharingInput| {
+    let send = EventHandler::new(move |input: ScreenSharingInput| {
         spawn(sharing.pane.send(input));
     });
 
@@ -31,7 +31,7 @@ pub(crate) fn ScreenSharingPane() -> Element {
             }
         },
         ScreenSharingState::Ready(ready) => rsx! {
-            Listed { ready, book: book(), now, remove }
+            Listed { ready, book: book(), now, send }
         },
     }
 }

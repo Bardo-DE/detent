@@ -1,6 +1,6 @@
 //! A fake screen-sharing portal: `org.quire.Portal1` at the portal path on the portal's name on a
 //! private bus, holding the apps a test sets. It writes down every call, and can be made to
-//! refuse the next removal.
+//! refuse the next removal or allowance.
 
 use super::bus::PrivateBus;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
@@ -24,10 +24,17 @@ pub struct Remembered {
 
 type Row = (String, String, u32, u64);
 
+/// What `Allow` was asked: app id, screens, input bits.
+pub type Allowance = (String, String, u32);
+
+/// The date the fake gives an app it lets in, in seconds since 1970.
+const ALLOWED_AT: u64 = 1_000_000;
+
 struct Portal {
     rows: Arc<Mutex<Vec<Row>>>,
     listed: Arc<AtomicUsize>,
     revoked: Arc<Mutex<Vec<String>>>,
+    allowed: Arc<Mutex<Vec<Allowance>>>,
     refuse: Arc<AtomicBool>,
 }
 
@@ -48,12 +55,27 @@ impl Portal {
         rows.retain(|(app, ..)| *app != app_id);
         Ok(u32::try_from(before - rows.len()).unwrap_or(u32::MAX))
     }
+
+    async fn allow(&self, app_id: String, screens: String, input: u32) -> fdo::Result<()> {
+        if self.refuse.swap(false, Ordering::SeqCst) {
+            return Err(fdo::Error::Failed("not changed".to_owned()));
+        }
+        self.allowed
+            .lock()
+            .expect("allowed")
+            .push((app_id.clone(), screens, input));
+        let mut rows = self.rows.lock().expect("rows");
+        rows.retain(|(app, ..)| *app != app_id);
+        rows.push((app_id.clone(), app_id, 2, ALLOWED_AT));
+        Ok(())
+    }
 }
 
 /// The fake, kept alive while the test runs.
 pub struct Fake {
     listed: Arc<AtomicUsize>,
     revoked: Arc<Mutex<Vec<String>>>,
+    allowed: Arc<Mutex<Vec<Allowance>>>,
     refuse: Arc<AtomicBool>,
     pub connection: zbus::Connection,
 }
@@ -69,7 +91,12 @@ impl Fake {
         self.revoked.lock().expect("revoked").clone()
     }
 
-    /// The next removal is refused.
+    /// The apps let in, in order, with what was asked for each.
+    pub fn allowed(&self) -> Vec<Allowance> {
+        self.allowed.lock().expect("allowed").clone()
+    }
+
+    /// The next removal or allowance is refused.
     pub fn refuse_next(&self) {
         self.refuse.store(true, Ordering::SeqCst);
     }
@@ -84,6 +111,7 @@ pub async fn serve_unnamed(bus: &PrivateBus, apps: &[Remembered]) -> Fake {
     let fake = Fake {
         listed: Arc::default(),
         revoked: Arc::default(),
+        allowed: Arc::default(),
         refuse: Arc::default(),
         connection: bus.connect().await,
     };
@@ -95,6 +123,7 @@ pub async fn serve_unnamed(bus: &PrivateBus, apps: &[Remembered]) -> Fake {
                 rows: Arc::new(Mutex::new(rows)),
                 listed: Arc::clone(&fake.listed),
                 revoked: Arc::clone(&fake.revoked),
+                allowed: Arc::clone(&fake.allowed),
                 refuse: Arc::clone(&fake.refuse),
             },
         )

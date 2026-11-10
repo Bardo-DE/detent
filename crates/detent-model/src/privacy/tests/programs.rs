@@ -3,7 +3,7 @@
 
 use super::{LOUPE, subject};
 use crate::origin::SchemaOrigin;
-use crate::privacy::{DesktopApp, ProgramBook};
+use crate::privacy::{DesktopApp, EntryVisibility, ProgramBook};
 
 fn app(id: &str, name: &str, exec: Option<&str>, flatpak: Option<&str>) -> DesktopApp {
     DesktopApp {
@@ -14,6 +14,7 @@ fn app(id: &str, name: &str, exec: Option<&str>, flatpak: Option<&str>) -> Deskt
         flatpak: flatpak.map(str::to_owned),
         icon: Some(std::path::PathBuf::from(format!("/icons/{id}.svg"))),
         origin: SchemaOrigin::System,
+        visibility: EntryVisibility::Listed,
     }
 }
 

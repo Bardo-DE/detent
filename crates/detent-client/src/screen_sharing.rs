@@ -62,6 +62,9 @@ impl Machine for ScreenSharing {
             ScreenSharingEffect::Revoke(app) => {
                 vec![ScreenSharingInput::Removed(self.link.revoke(app).await)]
             }
+            ScreenSharingEffect::Allow(app) => {
+                vec![ScreenSharingInput::Allowed(self.link.allow(app).await)]
+            }
         }
     }
 }

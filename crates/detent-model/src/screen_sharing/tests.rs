@@ -2,10 +2,11 @@
 
 use super::{
     APP_ID_MAX, ScreenGrant, ScreenSharingEffect, ScreenSharingInput, ScreenSharingState,
-    ShareLength, screen_sharing_step,
+    ShareLength, allow_candidates, screen_sharing_step,
 };
 use crate::Absence;
-use crate::privacy::ProgramSubject;
+use crate::origin::SchemaOrigin;
+use crate::privacy::{DesktopApp, EntryVisibility, ProgramBook, ProgramSubject};
 use crate::updates::UnixSeconds;
 
 const NOW: UnixSeconds = UnixSeconds(1_800_000_000);
@@ -160,4 +161,96 @@ fn the_portal_going_away_is_said_and_coming_back_lists_again() {
     assert!(effects.is_empty(), "nothing to remove while it is gone");
     let back = screen_sharing_step(gone, ScreenSharingInput::Found(Ok(vec![]))).0;
     assert_eq!(grants_of(&back), Vec::<&str>::new());
+}
+
+#[test]
+fn allow_asks_the_portal_once_and_the_answer_reads_the_list_again() {
+    let state = ready(vec![grant(MEET, ShareLength::UntilRemoved, DAY)]);
+    let (asked, effects) = screen_sharing_step(state, ScreenSharingInput::Allow(subject(CHAT)));
+    assert_eq!(effects, [ScreenSharingEffect::Allow(subject(CHAT))]);
+    // While one is under way, nothing else is asked.
+    let (asked, effects) = screen_sharing_step(
+        asked,
+        ScreenSharingInput::Allow(subject("org.example.Other")),
+    );
+    assert!(effects.is_empty());
+    let (asked, effects) = screen_sharing_step(asked, ScreenSharingInput::Remove(subject(MEET)));
+    assert!(effects.is_empty());
+    let (done, effects) = screen_sharing_step(asked, ScreenSharingInput::Allowed(Ok(())));
+    assert_eq!(effects, [ScreenSharingEffect::Reload]);
+    // And the next press is heard again.
+    let (_, effects) = screen_sharing_step(done, ScreenSharingInput::Remove(subject(MEET)));
+    assert_eq!(effects, [ScreenSharingEffect::Revoke(subject(MEET))]);
+}
+
+#[test]
+fn an_app_already_listed_is_not_allowed_again() {
+    let state = ready(vec![grant(MEET, ShareLength::UntilRemoved, DAY)]);
+    let (same, effects) =
+        screen_sharing_step(state.clone(), ScreenSharingInput::Allow(subject(MEET)));
+    assert!(effects.is_empty());
+    assert_eq!(same, state);
+}
+
+#[test]
+fn a_remove_under_way_holds_allow_back() {
+    let state = ready(vec![grant(MEET, ShareLength::UntilRemoved, DAY)]);
+    let (asked, _) = screen_sharing_step(state, ScreenSharingInput::Remove(subject(MEET)));
+    let (_, effects) = screen_sharing_step(asked, ScreenSharingInput::Allow(subject(CHAT)));
+    assert!(effects.is_empty());
+}
+
+#[test]
+fn a_refused_allow_is_told_and_the_list_is_read_again() {
+    let state = ready(vec![]);
+    let (asked, _) = screen_sharing_step(state, ScreenSharingInput::Allow(subject(MEET)));
+    let words = "Screen sharing could not be changed.".to_owned();
+    let (freed, effects) =
+        screen_sharing_step(asked, ScreenSharingInput::Allowed(Err(words.clone())));
+    assert_eq!(
+        effects,
+        [
+            ScreenSharingEffect::Tell(words),
+            ScreenSharingEffect::Reload
+        ]
+    );
+    let (_, effects) = screen_sharing_step(freed, ScreenSharingInput::Allow(subject(MEET)));
+    assert_eq!(effects, [ScreenSharingEffect::Allow(subject(MEET))]);
+}
+
+fn entry(id: &str, name: &str, origin: SchemaOrigin, visibility: EntryVisibility) -> DesktopApp {
+    DesktopApp {
+        id: id.to_owned(),
+        name: name.to_owned(),
+        exec: None,
+        try_exec: None,
+        flatpak: None,
+        icon: None,
+        origin,
+        visibility,
+    }
+}
+
+#[test]
+fn the_apps_offered_are_listed_system_entries_not_yet_allowed_by_name() {
+    use EntryVisibility::{Hidden, Listed};
+    use SchemaOrigin::{PersonWritable, System};
+    let book = ProgramBook {
+        apps: vec![
+            entry("zed", "Zed", System, Listed),
+            entry("anydesk", "AnyDesk", System, Listed),
+            entry("anydesk", "AnyDesk again", System, Listed),
+            entry("rustdesk", "RustDesk", System, Listed),
+            entry("helper", "Helper", System, Hidden),
+            entry("planted", "Planted", PersonWritable, Listed),
+            entry(MEET, "Meet", System, Listed),
+        ],
+        system_bins: vec![],
+    };
+    let grants = [grant(MEET, ShareLength::UntilRemoved, DAY)];
+    let offered: Vec<String> = allow_candidates(&book, &grants)
+        .into_iter()
+        .map(|subject| subject.0)
+        .collect();
+    assert_eq!(offered, ["anydesk", "rustdesk", "zed"]);
 }

@@ -1,5 +1,5 @@
 //! The screen-sharing portal behind the Privacy page's list of apps that may share the screen
-//! without asking again, and taking one back.
+//! without asking again, taking one back, and letting another in.
 
 mod bus;
 #[cfg(feature = "testing")]
@@ -20,4 +20,7 @@ pub trait ScreenSharingLink: Debug + Send + Sync {
     fn list(&self) -> Work<'_, Result<Vec<ScreenGrant>, Absence>>;
     /// Takes `app` back, so the portal asks the next time; the words that say why not.
     fn revoke(&self, app: ProgramSubject) -> Work<'_, Result<(), String>>;
+    /// Lets `app` share the screen and be controlled without asking, until it is taken back; the
+    /// words that say why not.
+    fn allow(&self, app: ProgramSubject) -> Work<'_, Result<(), String>>;
 }
