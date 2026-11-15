@@ -1,5 +1,5 @@
 //! The crate's integration tests: one executable, one module per topic.
-//! A separate test target needs a stated reason (CONVENTIONS.md, Tests).
+//! A separate test target needs a stated reason.
 
 mod absent_bus;
 mod handover;

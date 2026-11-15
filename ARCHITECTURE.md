@@ -4,8 +4,8 @@ detent is the desktop's Settings app: one window on Blitz, drawn only with quire
 Programs ship a schema of their settings (quire design/22 section 9); detent renders pages from
 every schema it finds and reads and writes the files the schemas name. It does not talk to a
 program about a setting: each program's own directory watch applies what detent writes. The one
-word it sends is the person's, to memory, for a setting looser than the shipped one. CONVENTIONS.md holds the
-rules every repo shares; this file is detent's map and rules, and wins where they disagree.
+word it sends is the person's, to memory, for a setting looser than the shipped one. CONVENTIONS.md names the
+style guides every repo follows; this file is detent's map and rules, and wins where they disagree.
 
 ## Sibling repositories
 
